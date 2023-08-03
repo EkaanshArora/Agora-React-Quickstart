@@ -14,8 +14,17 @@ import {
 import AgoraRTC from "agora-rtc-sdk-ng";
 import "./App.css";
 
-function App() {
-  const client = useRTCClient(AgoraRTC.createClient({ codec: "vp8", mode: "rtc" }));
+function App(){
+  const client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
+  return (
+    <AgoraRTCProvider client={client}>
+      <Container />
+    </AgoraRTCProvider>
+  )
+}
+
+function Container() {
+  const client = useRTCClient();
   const [channelName, setChannelName] = useState("test");
   const [AppID, setAppID] = useState("");
   const [token, setToken] = useState("");
@@ -29,7 +38,6 @@ function App() {
         // @ts-expect-error
         console.log("client._encryption", client._encryptionMode)
       }}>setEncryptionConfig</button>
-      {!inCall ? (
         <Form
           AppID={AppID}
           setAppID={setAppID}
@@ -39,30 +47,26 @@ function App() {
           setToken={setToken}
           setInCall={setInCall}
         />
-      ) : (
-        <AgoraRTCProvider client={client}>
-          <Videos channelName={channelName} AppID={AppID} token={token} />
+          <Videos channelName={channelName} AppID={AppID} token={token} inCall={inCall}/>
           <br /><br />
           <button onClick={() => setInCall(false)}>End Call</button>
-        </AgoraRTCProvider>
-      )}
     </div>
   );
 }
 
-function Videos(props: { channelName: string; AppID: string; token: string }) {
-  const { AppID, channelName, token } = props;
-  const { isLoading: isLoadingMic, localMicrophoneTrack } = useLocalMicrophoneTrack();
-  const { isLoading: isLoadingCam, localCameraTrack } = useLocalCameraTrack();
+function Videos(props: { channelName: string; AppID: string; token: string; inCall: boolean }) {
+  const { AppID, channelName, token, inCall } = props;
+  const { isLoading: isLoadingMic, localMicrophoneTrack } = useLocalMicrophoneTrack(inCall);
+  const { isLoading: isLoadingCam, localCameraTrack } = useLocalCameraTrack(inCall);
   const remoteUsers = useRemoteUsers();
   const { audioTracks } = useRemoteAudioTracks(remoteUsers);
 
-  usePublish([localMicrophoneTrack, localCameraTrack]);
+  usePublish([localMicrophoneTrack, localCameraTrack], inCall);
   useJoin({
     appid: AppID,
     channel: channelName,
     token: token === "" ? null : token,
-  });
+  }, inCall);
 
   audioTracks.map((track) => track.play());
   const deviceLoading = isLoadingMic || isLoadingCam;
