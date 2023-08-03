@@ -1,4 +1,6 @@
-import { CSSProperties, useState } from "react";
+import VirtualBackgroundExtension, { IVirtualBackgroundProcessor } from "agora-extension-virtual-background";
+import wasm from "agora-extension-virtual-background/wasms/agora-wasm.wasm?url";
+import { CSSProperties, useRef, useState } from "react";
 import {
   AgoraRTCProvider,
   useJoin,
@@ -52,6 +54,31 @@ function Videos(props: { channelName: string; AppID: string; token: string }) {
   const remoteUsers = useRemoteUsers();
   const { audioTracks } = useRemoteAudioTracks(remoteUsers);
 
+  const extension = useRef(new VirtualBackgroundExtension());
+  const processor = useRef<IVirtualBackgroundProcessor>();
+
+  const initializeVirtualBackgroundProcessor = async () => {
+    AgoraRTC.registerExtensions([extension.current]);
+
+    if (!extension.current.checkCompatibility()) {
+      console.error("Does not support virtual background!");
+      return;
+    }
+
+    if (localCameraTrack) {
+      processor.current = extension.current.createProcessor();
+      console.log("processor.current", processor.current);
+      console.log("wasm", wasm);
+      await processor.current.init(wasm);
+      localCameraTrack.pipe(processor.current).pipe(localCameraTrack.processorDestination);
+      processor.current.setOptions({
+        type: "color",
+        color: "#00ff00",
+      });
+      await processor.current.enable();
+    }
+  };
+
   usePublish([localMicrophoneTrack, localCameraTrack]);
   useJoin({
     appid: AppID,
@@ -64,12 +91,15 @@ function Videos(props: { channelName: string; AppID: string; token: string }) {
   if (deviceLoading) return <div style={styles.grid}>Loading devices...</div>;
 
   return (
-    <div style={{ ...styles.grid, ...returnGrid(remoteUsers) }}>
-      <LocalVideoTrack track={localCameraTrack} play={true} style={styles.gridCell} />
-      {remoteUsers.map((user) => (
-        <RemoteUser user={user} style={styles.gridCell} />
-      ))}
-    </div>
+    <>
+      <button onClick={initializeVirtualBackgroundProcessor}>Click to enable virtual background</button>
+      <div style={{ ...styles.grid, ...returnGrid(remoteUsers) }}>
+        <LocalVideoTrack track={localCameraTrack} play={true} style={styles.gridCell} />
+        {remoteUsers.map((user) => (
+          <RemoteUser user={user} style={styles.gridCell} />
+        ))}
+      </div>
+    </>
   );
 }
 
@@ -89,15 +119,23 @@ function Form(props: {
     <div>
       <p>Please enter your Agora AppID and Channel Name</p>
       <label htmlFor="appid">Agora App ID: </label>
-      <input id="appid" type="text" value={AppID} onChange={(e) => setAppID(e.target.value)} placeholder="required"/>
+      <input id="appid" type="text" value={AppID} onChange={(e) => setAppID(e.target.value)} placeholder="required" />
       <br /><br />
       <label htmlFor="channel">Channel Name: </label>
-      <input id="channel" type="text" value={channelName} onChange={(e) => setChannelName(e.target.value)} placeholder="required" />
+      <input
+        id="channel"
+        type="text"
+        value={channelName}
+        onChange={(e) => setChannelName(e.target.value)}
+        placeholder="required"
+      />
       <br /><br />
       <label htmlFor="token">Channel Token: </label>
       <input id="token" type="text" value={token} onChange={(e) => setToken(e.target.value)} placeholder="optional" />
       <br /><br />
-      <button onClick={() => AppID && channelName ? setInCall(true) : alert("Please enter Agora App ID and Channel Name")}>
+      <button
+        onClick={() => (AppID && channelName ? setInCall(true) : alert("Please enter Agora App ID and Channel Name"))}
+      >
         Join
       </button>
     </div>
