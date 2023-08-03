@@ -20,10 +20,15 @@ function App() {
   const [AppID, setAppID] = useState("");
   const [token, setToken] = useState("");
   const [inCall, setInCall] = useState(false);
-
+  
   return (
     <div style={styles.container}>
       <h1>Agora React Videocall</h1>
+      <button onClick={()=>{
+        client.setEncryptionConfig("aes-128-ecb", "!@#ASDasd123", )
+        // @ts-expect-error
+        console.log("client._encryption", client._encryptionMode)
+      }}>setEncryptionConfig</button>
       {!inCall ? (
         <Form
           AppID={AppID}
