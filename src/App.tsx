@@ -14,7 +14,7 @@ import {
 import AgoraRTC from "agora-rtc-sdk-ng";
 import "./App.css";
 
-function App(){
+function App() {
   const client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
   return (
     <AgoraRTCProvider client={client}>
@@ -22,6 +22,8 @@ function App(){
     </AgoraRTCProvider>
   )
 }
+// Uint8Array and exactly equal to 32 bytes
+const salt = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 1, 2]);
 
 function Container() {
   const client = useRTCClient();
@@ -29,27 +31,27 @@ function Container() {
   const [AppID, setAppID] = useState("");
   const [token, setToken] = useState("");
   const [inCall, setInCall] = useState(false);
-  
+
   return (
     <div style={styles.container}>
       <h1>Agora React Videocall</h1>
-      <button onClick={()=>{
-        client.setEncryptionConfig("aes-128-ecb", "!@#ASDasd123", )
-        // @ts-expect-error
+      <button onClick={() => {
+        client.setEncryptionConfig("aes-128-gcm2", "!@#ASDasd123", salt)
+        // @ts-expect-error hidden property
         console.log("client._encryption", client._encryptionMode)
       }}>setEncryptionConfig</button>
-        <Form
-          AppID={AppID}
-          setAppID={setAppID}
-          channelName={channelName}
-          setChannelName={setChannelName}
-          token={token}
-          setToken={setToken}
-          setInCall={setInCall}
-        />
-          <Videos channelName={channelName} AppID={AppID} token={token} inCall={inCall}/>
-          <br /><br />
-          <button onClick={() => setInCall(false)}>End Call</button>
+      <Form
+        AppID={AppID}
+        setAppID={setAppID}
+        channelName={channelName}
+        setChannelName={setChannelName}
+        token={token}
+        setToken={setToken}
+        setInCall={setInCall}
+      />
+      <Videos channelName={channelName} AppID={AppID} token={token} inCall={inCall} />
+      <br /><br />
+      <button onClick={() => setInCall(false)}>End Call</button>
     </div>
   );
 }
@@ -85,20 +87,19 @@ function Videos(props: { channelName: string; AppID: string; token: string; inCa
 /* Standard form to enter AppID and Channel Name */
 function Form(props: {
   AppID: string;
-  setAppID: Function;
+  setAppID: React.Dispatch<React.SetStateAction<string>>;
   channelName: string;
-  setChannelName: Function;
+  setChannelName: React.Dispatch<React.SetStateAction<string>>;
   token: string;
-  setToken: Function;
-  setInCall: Function;
+  setToken: React.Dispatch<React.SetStateAction<string>>;
+  setInCall: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
-  const {} = props;
   const { AppID, setAppID, channelName, setChannelName, token, setToken, setInCall } = props;
   return (
     <div>
       <p>Please enter your Agora AppID and Channel Name</p>
       <label htmlFor="appid">Agora App ID: </label>
-      <input id="appid" type="text" value={AppID} onChange={(e) => setAppID(e.target.value)} placeholder="required"/>
+      <input id="appid" type="text" value={AppID} onChange={(e) => setAppID(e.target.value)} placeholder="required" />
       <br /><br />
       <label htmlFor="channel">Channel Name: </label>
       <input id="channel" type="text" value={channelName} onChange={(e) => setChannelName(e.target.value)} placeholder="required" />
@@ -122,10 +123,10 @@ const returnGrid = (remoteUsers: Array<any>) => {
       remoteUsers.length > 8
         ? unit.repeat(4)
         : remoteUsers.length > 3
-        ? unit.repeat(3)
-        : remoteUsers.length > 0
-        ? unit.repeat(2)
-        : unit,
+          ? unit.repeat(3)
+          : remoteUsers.length > 0
+            ? unit.repeat(2)
+            : unit,
   };
 };
 const unit = "minmax(0, 1fr) ";
