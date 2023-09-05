@@ -10,6 +10,8 @@ import {
   useRemoteUsers,
   RemoteUser,
   LocalVideoTrack,
+  useTrackEvent,
+  useClientEvent,
 } from "agora-rtc-react";
 import AgoraRTC from "agora-rtc-sdk-ng";
 import "./App.css";
@@ -51,8 +53,18 @@ function Videos(props: { channelName: string; AppID: string; token: string }) {
   const { isLoading: isLoadingCam, localCameraTrack } = useLocalCameraTrack();
   const remoteUsers = useRemoteUsers();
   const { audioTracks } = useRemoteAudioTracks(remoteUsers);
-
+  
+  const client = useRTCClient();
+  useClientEvent(client, "user-published", (user) => {
+    console.log(user);
+  });
+  
   usePublish([localMicrophoneTrack, localCameraTrack]);
+  
+  useTrackEvent(localCameraTrack, "track-ended", () => {
+    console.log()
+  });
+
   useJoin({
     appid: AppID,
     channel: channelName,
@@ -76,14 +88,13 @@ function Videos(props: { channelName: string; AppID: string; token: string }) {
 /* Standard form to enter AppID and Channel Name */
 function Form(props: {
   AppID: string;
-  setAppID: Function;
+  setAppID: React.Dispatch<React.SetStateAction<string>>;
   channelName: string;
-  setChannelName: Function;
+  setChannelName: React.Dispatch<React.SetStateAction<string>>;
   token: string;
-  setToken: Function;
-  setInCall: Function;
+  setToken: React.Dispatch<React.SetStateAction<string>>;
+  setInCall: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
-  const {} = props;
   const { AppID, setAppID, channelName, setChannelName, token, setToken, setInCall } = props;
   return (
     <div>
@@ -107,7 +118,7 @@ function Form(props: {
 export default App;
 
 /* Style Utils */
-const returnGrid = (remoteUsers: Array<any>) => {
+const returnGrid = (remoteUsers: Array<unknown>) => {
   return {
     gridTemplateColumns:
       remoteUsers.length > 8
