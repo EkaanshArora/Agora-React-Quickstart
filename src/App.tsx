@@ -99,7 +99,7 @@ const Controls = (props: {
 }) => {
   const { localMicrophoneTrack, localCameraTrack } = props;
   return (
-    <div style={{ display: 'flex', flexDirection: 'row', alignSelf: 'center' }}>
+    <div style={{ display: 'flex', flexDirection: 'row', alignSelf: 'center', width: '50%', justifyContent: 'space-evenly' }}>
       <button onClick={() => void localMicrophoneTrack.setMuted(!localMicrophoneTrack.muted)}>Mute Mic</button>
       <button onClick={() => void localCameraTrack.setMuted(!localCameraTrack.muted)}>Mute Cam</button>
     </div>
