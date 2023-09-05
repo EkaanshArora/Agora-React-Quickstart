@@ -10,7 +10,6 @@ import {
   useRemoteUsers,
   RemoteUser,
   LocalVideoTrack,
-  useTrackEvent,
   useClientEvent,
 } from "agora-rtc-react";
 import AgoraRTC, { ILocalAudioTrack, ILocalVideoTrack } from "agora-rtc-sdk-ng";
@@ -39,7 +38,7 @@ function App() {
       ) : (
         <AgoraRTCProvider client={client}>
           <Videos channelName={channelName} AppID={AppID} token={token} />
-          <br /><br />
+          <br />
           <button onClick={() => setInCall(false)}>End Call</button>
         </AgoraRTCProvider>
       )}
@@ -60,10 +59,6 @@ function Videos(props: { channelName: string; AppID: string; token: string }) {
   });
 
   usePublish([localMicrophoneTrack, localCameraTrack]);
-
-  useTrackEvent(localCameraTrack, "track-ended", () => {
-    console.log()
-  });
 
   useJoin({
     appid: AppID,
@@ -93,18 +88,15 @@ function Videos(props: { channelName: string; AppID: string; token: string }) {
   );
 }
 
-const Controls = (props: {
-  localMicrophoneTrack: ILocalAudioTrack;
-  localCameraTrack: ILocalVideoTrack;
-}) => {
+const Controls = (props: { localMicrophoneTrack: ILocalAudioTrack; localCameraTrack: ILocalVideoTrack }) => {
   const { localMicrophoneTrack, localCameraTrack } = props;
   return (
-    <div style={{ display: 'flex', flexDirection: 'row', alignSelf: 'center', width: '50%', justifyContent: 'space-evenly' }}>
+    <div style={styles.btnContainer}>
       <button onClick={() => void localMicrophoneTrack.setMuted(!localMicrophoneTrack.muted)}>Mute Mic</button>
       <button onClick={() => void localCameraTrack.setMuted(!localCameraTrack.muted)}>Mute Cam</button>
     </div>
-  )
-}
+  );
+};
 
 /* Standard form to enter AppID and Channel Name */
 function Form(props: {
@@ -122,14 +114,22 @@ function Form(props: {
       <p>Please enter your Agora AppID and Channel Name</p>
       <label htmlFor="appid">Agora App ID: </label>
       <input id="appid" type="text" value={AppID} onChange={(e) => setAppID(e.target.value)} placeholder="required" />
-      <br /><br />
+      <br />
       <label htmlFor="channel">Channel Name: </label>
-      <input id="channel" type="text" value={channelName} onChange={(e) => setChannelName(e.target.value)} placeholder="required" />
-      <br /><br />
+      <input
+        id="channel"
+        type="text"
+        value={channelName}
+        onChange={(e) => setChannelName(e.target.value)}
+        placeholder="required"
+      />
+      <br />
       <label htmlFor="token">Channel Token: </label>
       <input id="token" type="text" value={token} onChange={(e) => setToken(e.target.value)} placeholder="optional" />
-      <br /><br />
-      <button onClick={() => AppID && channelName ? setInCall(true) : alert("Please enter Agora App ID and Channel Name")}>
+      <br />
+      <button
+        onClick={() => (AppID && channelName ? setInCall(true) : alert("Please enter Agora App ID and Channel Name"))}
+      >
         Join
       </button>
     </div>
@@ -145,10 +145,10 @@ const returnGrid = (remoteUsers: Array<unknown>) => {
       remoteUsers.length > 8
         ? unit.repeat(4)
         : remoteUsers.length > 3
-          ? unit.repeat(3)
-          : remoteUsers.length > 0
-            ? unit.repeat(2)
-            : unit,
+        ? unit.repeat(3)
+        : remoteUsers.length > 0
+        ? unit.repeat(2)
+        : unit,
   };
 };
 const unit = "minmax(0, 1fr) ";
@@ -164,5 +164,12 @@ const styles = {
     flexDirection: "column" as CSSProperties["flexDirection"],
     flex: 1,
     justifyContent: "center",
+  },
+  btnContainer: {
+    display: "flex",
+    flexDirection: "row" as CSSProperties["flexDirection"],
+    alignSelf: "center",
+    width: "50%",
+    justifyContent: "space-evenly",
   },
 };
