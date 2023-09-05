@@ -13,7 +13,7 @@ import {
   useTrackEvent,
   useClientEvent,
 } from "agora-rtc-react";
-import AgoraRTC from "agora-rtc-sdk-ng";
+import AgoraRTC, { ILocalAudioTrack, ILocalVideoTrack } from "agora-rtc-sdk-ng";
 import "./App.css";
 
 function App() {
@@ -53,14 +53,14 @@ function Videos(props: { channelName: string; AppID: string; token: string }) {
   const { isLoading: isLoadingCam, localCameraTrack } = useLocalCameraTrack();
   const remoteUsers = useRemoteUsers();
   const { audioTracks } = useRemoteAudioTracks(remoteUsers);
-  
+
   const client = useRTCClient();
   useClientEvent(client, "user-published", (user) => {
     console.log(user);
   });
-  
+
   usePublish([localMicrophoneTrack, localCameraTrack]);
-  
+
   useTrackEvent(localCameraTrack, "track-ended", () => {
     console.log()
   });
@@ -72,17 +72,38 @@ function Videos(props: { channelName: string; AppID: string; token: string }) {
   });
 
   audioTracks.map((track) => track.play());
+
   const deviceLoading = isLoadingMic || isLoadingCam;
   if (deviceLoading) return <div style={styles.grid}>Loading devices...</div>;
 
+  const deviceUnavailable = !localCameraTrack || !localMicrophoneTrack;
+  if (deviceUnavailable) return <div style={styles.grid}>Please allow camera and microphone permissions</div>;
+
   return (
-    <div style={{ ...styles.grid, ...returnGrid(remoteUsers) }}>
-      <LocalVideoTrack track={localCameraTrack} play={true} style={styles.gridCell} />
-      {remoteUsers.map((user) => (
-        <RemoteUser user={user} style={styles.gridCell} />
-      ))}
-    </div>
+    <>
+      <div style={{ ...styles.grid, ...returnGrid(remoteUsers) }}>
+        <LocalVideoTrack track={localCameraTrack} play={true} style={styles.gridCell} />
+        {remoteUsers.map((user) => (
+          <RemoteUser user={user} style={styles.gridCell} />
+        ))}
+      </div>
+      <br />
+      <Controls localMicrophoneTrack={localMicrophoneTrack} localCameraTrack={localCameraTrack} />
+    </>
   );
+}
+
+const Controls = (props: {
+  localMicrophoneTrack: ILocalAudioTrack;
+  localCameraTrack: ILocalVideoTrack;
+}) => {
+  const { localMicrophoneTrack, localCameraTrack } = props;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'row', alignSelf: 'center' }}>
+      <button onClick={() => void localMicrophoneTrack.setMuted(!localMicrophoneTrack.muted)}>Mute Mic</button>
+      <button onClick={() => void localCameraTrack.setMuted(!localCameraTrack.muted)}>Mute Cam</button>
+    </div>
+  )
 }
 
 /* Standard form to enter AppID and Channel Name */
@@ -100,7 +121,7 @@ function Form(props: {
     <div>
       <p>Please enter your Agora AppID and Channel Name</p>
       <label htmlFor="appid">Agora App ID: </label>
-      <input id="appid" type="text" value={AppID} onChange={(e) => setAppID(e.target.value)} placeholder="required"/>
+      <input id="appid" type="text" value={AppID} onChange={(e) => setAppID(e.target.value)} placeholder="required" />
       <br /><br />
       <label htmlFor="channel">Channel Name: </label>
       <input id="channel" type="text" value={channelName} onChange={(e) => setChannelName(e.target.value)} placeholder="required" />
@@ -124,10 +145,10 @@ const returnGrid = (remoteUsers: Array<unknown>) => {
       remoteUsers.length > 8
         ? unit.repeat(4)
         : remoteUsers.length > 3
-        ? unit.repeat(3)
-        : remoteUsers.length > 0
-        ? unit.repeat(2)
-        : unit,
+          ? unit.repeat(3)
+          : remoteUsers.length > 0
+            ? unit.repeat(2)
+            : unit,
   };
 };
 const unit = "minmax(0, 1fr) ";
